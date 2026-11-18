@@ -55,4 +55,31 @@ describe("Member", () => {
       "Ana Pérez (doc. 12345678) - Plan Completo - $1500",
     );
   });
+
+  test("discount should be 0 by default", () => {
+    expect(member.discount).toBe(0);
+  });
+  
+  test("set discount to a valid value", () => {
+    member.discount = 20;
+    expect(member.discount).toBe(20);
+  });
+
+  test("reject a discount less than 0", () => {
+    expect(() => (member.discount = -5)).toThrow();
+  });
+
+  test("reject a discount greater than 100", () => {
+    expect(() => (member.discount = 150)).toThrow();
+  });
+
+  test("reject a discount that is not an integer", () => {
+    expect(() => (member.discount = 10.5)).toThrow();
+  });
+  
+  test("show discount in description", () => {
+    member.discount = 20;
+
+    expect(member.toString()).toContain("Descuento: 20%");
+  });
 });
