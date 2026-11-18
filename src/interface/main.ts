@@ -12,6 +12,12 @@ const inpDocument = document.getElementById(
 const selPlan = document.getElementById("sel-plan") as HTMLSelectElement | null;
 const inpFee = document.getElementById("inp-fee") as HTMLInputElement | null;
 const btnAdd = document.getElementById("btn-add") as HTMLButtonElement | null;
+const inpDiscount = document.getElementById(
+  "inp-discount",
+) as HTMLInputElement | null;
+const inpTotalDiscounted = document.getElementById(
+  "inp-total-discounted",
+) as HTMLInputElement | null;
 const errorContainer = document.getElementById(
   "error-container",
 ) as HTMLDivElement | null;
@@ -35,10 +41,11 @@ const inpTotalFees = document.getElementById(
 ) as HTMLInputElement | null;
 
 function clearInputs(): void {
-  if (inpName && inpDocument && inpFee) {
+  if (inpName && inpDocument && inpFee && inpDiscount) {
     inpName.value = "";
     inpDocument.value = "";
     inpFee.value = "";
+    inpDiscount.value = "";
   }
 }
 
@@ -73,7 +80,16 @@ function createFeeEditor(member: Member): HTMLDivElement {
   button.className = "btn btn-outline-secondary";
   button.textContent = "Guardar cuota";
   button.addEventListener("click", () => {
-    // TODO: editar la cuota del socio con el valor de input
+    try {
+      memberList.updateFee(member.documentId, Number(input.value));
+      hideError();
+      input.classList.remove("is-invalid");
+      updateList();
+      updateTotals();
+    } catch (error) {
+      showError(error instanceof Error ? error.message : String(error));
+      input.classList.add("is-invalid");
+    }
   });
   group.append(input, button);
   return group;
@@ -89,9 +105,13 @@ function createCard(member: Member): HTMLDivElement {
   const title = document.createElement("h5");
   title.className = "card-title";
   title.textContent = member.name;
+  const badge = document.createElement("span");
+  badge.className = "badge badge-primary";
+  badge.textContent = PLAN_LABELS[member.plan];
+
+  title.append(" ", badge);
   const lines = [
     `Documento: ${member.documentId}`,
-    `Plan: ${PLAN_LABELS[member.plan]}`,
     `Cuota mensual: $${member.monthlyFee}`,
   ];
   if (member.discount > 0) {
@@ -116,9 +136,10 @@ function updateList(): void {
 }
 
 function updateTotals(): void {
-  if (inpTotalMembers && inpTotalFees) {
+  if (inpTotalMembers && inpTotalFees && inpTotalDiscounted) {
     inpTotalMembers.value = String(memberList.getItems().length);
     inpTotalFees.value = String(memberList.totalFees());
+    inpTotalDiscounted.value = String(memberList.totalDiscounted());
   }
 }
 
@@ -143,6 +164,7 @@ if (btnAdd && inpName && inpDocument && selPlan && inpFee) {
         plan: selPlan.value as Plan,
         monthlyFee: Number(inpFee.value),
       });
+      member.discount = Number(inpDiscount?.value ?? 0);
       memberList.add(member);
       hideError();
       clearInputs();
